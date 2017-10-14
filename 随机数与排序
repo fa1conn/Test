@@ -1,0 +1,34 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<time.h>
+int main()
+{
+	srand((int)time(0));
+	int i,n,c,e;
+	int a[99];
+	scanf("%d",&n);
+
+	if(n>100)
+		n=100;
+
+	for (i=0;i<n;i++){
+		a[i]=1+rand()%1000;
+	}
+
+	for(i=0;i<n-1;i++){
+		for(c=0;i<n-1-c;c++){
+			if(a[c]>a[c+1]){
+				e=a[c];
+				a[c]=a[c+1];
+				a[c+1]=e;
+			}
+		}
+}
+
+for(i=0;i<n;i++){
+	printf("%d  ",a[i]);
+}
+
+
+	return 0;
+}
