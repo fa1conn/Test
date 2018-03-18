@@ -1,0 +1,159 @@
+### 0x01 起源
+一本书上看到的题目，正在讲递归的内容。其实原本是想破解软件的，但是由于太菜，只实现了暴力破解（改跳转），并未能写注册机，而且那软件还有个upx的壳（好吧，那个用工具就行了），所以开学后临时换成写程序了。
+### 0x02 程序用途
+类似取子游戏，有总数，有拿取范围，用户和计算机进行回合制对战，剩最后一个谁去操作就是输。
+### 0x03 开发思路
+当然不能让用户赢了。所以程序必须找到最佳的操作数。但是一开始总量大，刚开始操作你并不能知道什么操作数才是最优的选择，但是反过来想，如果你一开始是从总数中拿走一大部分，只剩一小部分的话，这样你就可以很快判断出怎么操作才最优。比如只剩5个，而规定一次最多删取3个，那么这局轮到的人必输。因为你这局不管怎么删取，加上对手的删取的数量，一定可以等于4，所以必输，因此设计的思路就在于怎样找到类似5这种让用户陷入必输的境地（用户感觉体验很差，什么垃圾游戏），但是程序是正向进行，又想逆向往回推，那么只好是用递归方法解决了。（个人算法很差，所以递归部分写了很久，还是太菜了）
+### 0x04 框架结构
+这个的话看程序就已经很明显了，程序里的函数都尽量使用简洁的语言标明了作用。也都附加了注释
+### 0x05 效率问题
+因为采用的递归方法内含循环，所以效率会比较低，如果总数太大，会直接导致用户要等待很久才能继续游戏，当然，越到后面速度越快。让用户等待显然不可取，故我采用的解决方法是前期先用随机数进行对战，这个期间就不要用递归的方法了，等到基数小点，这个时候再用递归。当然可行的方法应该还是有的，比如换掉整个算法，这个我就不敢尝试了。（其实是不会）
+
+```
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#define Totalapp  60
+#define Maxdel    4
+#define Nogooddel -1
+
+typedef enum{Human,Computer}player;
+void Introduce(char HumanName[]);
+void Result(int apps,player whoseturn);
+int Humandel(int apps,char HumanName[]);
+int Computerdel(int apps);
+int Gooddel(int apps);
+int Badsituation(int apps);
+
+int main()
+{
+	int apps,dels;
+	char HumanName[20];
+	player whoseturn;
+	Introduce(HumanName);
+	apps=Totalapp;
+	whoseturn=Human;
+	while(apps>1){
+		printf("\nThere are %d apps in mobilephone\n",apps);
+		switch(whoseturn){
+			case Human:
+				dels=Humandel(apps,HumanName);
+				whoseturn=Computer;
+				break;
+			case Computer:
+				dels=Computerdel(apps);
+				whoseturn=Human;
+				break;
+		}
+		apps-=dels;
+	}
+	Result(apps,whoseturn);
+	system("pause");
+}
+
+/*
+引言，介绍游戏规则及录入玩家名字
+ */
+void Introduce(char HumanName[])
+{
+	printf("    This is a game.In this game,you and ");
+	printf("I will deleate %d apps from ",Totalapp);
+	printf("mobilephone.on each trun,you and ");
+	printf("I can deleate apps between 1 and %d",Maxdel);
+	printf("One will lose if he delete the last app.\n");
+	printf("Please enter you English name:");
+	scanf("%s",HumanName);
+}
+
+/*
+结果的判断
+ */
+void Result(int apps,player whoseturn)
+{
+	if(apps==0){
+		printf("You lose.");
+	}else{
+		printf("There is only one app.\n");
+		switch(whoseturn){
+			case Human:
+				printf("I win.\n");
+				break;
+			case Computer:
+				printf("You win.\n");
+				break;
+		}
+	}
+} 
+
+/*
+玩家回合的操作，输入的检测，防止程序崩溃
+ */
+int Humandel(int apps,char HumanName[])
+{
+	int dels,limit;
+	for( ; ; ){
+		printf("In %s turn: How many would you like to delete?\n",HumanName);
+		if(scanf("%d",&dels)!=1){
+			printf("Please enter a number.\n");
+			fflush(stdin);
+		}else{
+				if(dels>=1&&dels<=Maxdel&&dels<=apps){
+				break;
+			}else{
+				limit=(apps<Maxdel)?apps:Maxdel;
+				printf("Please choose a number between 1 ");
+				printf("and %d\n",limit);
+			}
+		}
+		
+	}
+	return dels;
+}
+
+/*
+电脑的回合，若apps过大，先使用随机数进行对战，当apps小到一定值
+改用Gooddel()解决
+ */
+int Computerdel(int apps)
+{
+	int dels;
+	if(apps>(Maxdel*5-1)){
+		srand((int)time(0));
+		dels=1+rand()%Maxdel;
+	}else{
+		dels=Gooddel(apps);
+		if(dels==Nogooddel){
+		 	dels=1;
+		}
+	}
+	printf("In my turn:I will delete %d app\n",dels);
+	return dels;
+}
+
+/*
+寻找最好的操作数
+ */
+int Gooddel(int apps)
+{
+	int dels;
+	for(dels=1;dels<=Maxdel;dels++){
+		if(Badsituation(apps-dels)){
+			return dels;
+		} 
+	}
+	return Nogooddel;
+}
+
+/*
+寻找令对手陷入困境的操作数
+ */
+int Badsituation(int apps)
+{
+	if(apps==1){
+		return 1;
+	}else{
+		return (Gooddel(apps)==Nogooddel);
+	}
+}
+```"# -" 
